@@ -3,7 +3,10 @@
 # manifests here too.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-resources: []
+resources:
+- functions.yaml
 # The deploy workflow replaces app with the image it built, pinned by digest.
 images:
-  - name: app
+- digest: sha256:8f058e625797f6462ce8ed85f796dd4dbc5674ecf4017200a150a9a9f62374da
+  name: app
+  newName: registry.gronblom.dev/noccooo/noccooo
