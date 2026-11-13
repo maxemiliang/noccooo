@@ -1,0 +1,7 @@
+# Buildpacks settings (Paketo): run "npm run build" before the image is made.
+[_]
+schema-version = "0.2"
+
+[[io.buildpacks.build.env]]
+name = "BP_NODE_RUN_SCRIPTS"
+value = "build"

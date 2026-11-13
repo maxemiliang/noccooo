@@ -1,0 +1,5 @@
+[tools]
+node = "24"
+pnpm = "12"
+# mcloud, maxcloud's CLI: deploys, logs, database access (`mcloud login` once per machine).
+"github:maxemiliang/maxcloud" = "0.16.0"

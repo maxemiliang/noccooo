@@ -1,0 +1,9 @@
+# What Flux applies from this repo into the app's namespace. functions.yaml
+# is generated from the app's functions on every deploy; list your own
+# manifests here too.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources: []
+# The deploy workflow replaces app with the image it built, pinned by digest.
+images:
+  - name: app

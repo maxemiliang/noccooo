@@ -1,0 +1,22 @@
+# This repo's app on maxcloud: the whole app's definition. mcloud deploy
+# registers the app from it the first time and keeps it in line after that
+# (no commit to the platform's git); mcloud status, logs and the rest use it too.
+app: noccooo
+# What the app may reserve (defaults: 200m CPU, 1Gi memory, 20 pods):
+# quota: {cpu: 500m, memory: 2Gi}
+# S3 buckets in UpCloud Object Storage (bucketName("uploads") in the SDK);
+# ":public" lets anyone read one, at https://<bucket>--<app>.gronblom.dev/:
+# buckets: [uploads, assets:public]
+# A Postgres database: every function gets DATABASE_URL from the db-app Secret, backed
+# up and restorable to a point in time. migrations/ is drizzle-kit's (meta/_journal.json),
+# so maxcloud's runner leaves it to the app, which applies it on start (src/db):
+# db: {size: 2Gi, instances: 2} for a replica on the other node.
+db: {size: 1Gi}
+# Hostnames of your own for a function or Knative service (it can stay
+# private). Only ones an admin allowed this app (maxcloud's
+# platform/infrastructure/configs/run/domains.yaml); proxied: behind Cloudflare.
+# domains:
+#   - {host: shop.gronblom.dev, service: web, proxied: true}
+# The folder the app is built from and mcloud dev runs in, if it isn't this
+# one (e.g. the web app in worker/ of a repo whose root is a Go CLI):
+# source: worker
