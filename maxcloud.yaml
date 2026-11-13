@@ -15,8 +15,8 @@ db: {size: 1Gi}
 # Hostnames of your own for a function or Knative service (it can stay
 # private). Only ones an admin allowed this app (maxcloud's
 # platform/infrastructure/configs/run/domains.yaml); proxied: behind Cloudflare.
-# domains:
-#   - {host: shop.gronblom.dev, service: web, proxied: true}
+domains:
+  - {host: noccooo.makiya.dev, service: web, proxied: true}
 # The folder the app is built from and mcloud dev runs in, if it isn't this
 # one (e.g. the web app in worker/ of a repo whose root is a Go CLI):
 # source: worker
