@@ -74,7 +74,7 @@ h1, h2, .label, .brand, .versus, .pip, .tile .ph, .tg i, .mover .tiers button, .
 }
 .tabs button[aria-selected="true"] { background: var(--ink); color: var(--onink); }
 .tabs button[aria-selected="false"]:hover { border-color: var(--line); background: var(--surface); }
-main { padding-top: 12px; padding-bottom: 40px; }
+main { padding-top: 12px; padding-bottom: 96px; }
 .viewhead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 h1, h2 { margin: 0; line-height: 1; font-stretch: 85%; letter-spacing: -.02em; }
 h1 { font-size: 2.1rem; }
@@ -282,6 +282,22 @@ dialog h2 { font-size: 2rem; margin-bottom: 14px; }
   .tile.landed .pic { animation: none; }
   .lane { transition: none; }
 }
+/* ---------- the grinch ---------- */
+/* Peeks up from the bottom-right corner; rises on hover and grumbles when poked. */
+.grinch {
+  position: fixed; right: 10px; bottom: 0; z-index: 30; width: 78px; padding: 0; border: 0; background: none;
+  cursor: pointer; transform: translateY(27%); transition: transform .35s cubic-bezier(.3, 1.5, .5, 1);
+  filter: drop-shadow(0 -4px 10px rgba(11,31,58,.18)); -webkit-tap-highlight-color: transparent;
+}
+.grinch svg { display: block; width: 100%; height: auto; }
+.grinch:hover, .grinch:focus-visible, .grinch.up { transform: translateY(2%); }
+.grinch:focus-visible { outline: none; }
+.grinch:focus-visible svg { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 50%; }
+.grinch .pupil { transition: transform .3s; }
+.grinch:hover .pupil, .grinch.up .pupil { transform: translateX(-3px); }
+body.dragging .grinch, body.mover-open .grinch { display: none; }
+@media (min-width: 640px) { .grinch { width: 104px; right: 22px; } }
+@media (prefers-reduced-motion: reduce) { .grinch, .grinch .pupil { transition: none; } }
 </style>
 </head>
 <body>
@@ -341,6 +357,24 @@ dialog h2 { font-size: 2rem; margin-bottom: 14px; }
     </div>
   </form>
 </dialog>
+
+<button class="grinch" id="grinch" type="button" title="Who goes there?" aria-label="A grinch is lurking">
+  <svg viewBox="0 0 120 124" aria-hidden="true">
+    <path d="M28 64 C26 50 40 40 60 40 C80 40 94 50 92 64 L104 66 L94 74 L101 82 L90 84 C86 106 74 122 60 122 C46 122 34 106 30 84 L19 82 L26 74 L16 66 Z" fill="#7dbb2a" stroke="#4e7d12" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M60 18 C40 18 26 32 24 52 C40 44 80 44 96 52 C96 44 94 38 90 34 C98 34 104 38 108 46 C108 30 92 18 60 18 Z" fill="#e5232f"/>
+    <circle cx="109" cy="49" r="7" fill="#ffffff" stroke="#d6dee7" stroke-width="1.5"/>
+    <path d="M20 54 C40 42 80 42 100 54 L98 63 C80 53 40 53 22 63 Z" fill="#ffffff" stroke="#d6dee7" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M36 72 L54 78" stroke="#2f4f0a" stroke-width="5" stroke-linecap="round"/>
+    <path d="M84 72 L66 78" stroke="#2f4f0a" stroke-width="5" stroke-linecap="round"/>
+    <path d="M38 82 C42 77 52 78 56 84 C50 88 42 88 38 82 Z" fill="#ffe14d" stroke="#2f4f0a" stroke-width="1.5"/>
+    <path d="M82 82 C78 77 68 78 64 84 C70 88 78 88 82 82 Z" fill="#ffe14d" stroke="#2f4f0a" stroke-width="1.5"/>
+    <circle class="pupil" cx="49" cy="83" r="2.6" fill="#c0151f"/>
+    <circle class="pupil" cx="71" cy="83" r="2.6" fill="#c0151f"/>
+    <ellipse cx="60" cy="94" rx="4" ry="2.6" fill="#2f4f0a"/>
+    <path d="M42 99 C52 110 72 110 82 96" fill="none" stroke="#2f4f0a" stroke-width="3" stroke-linecap="round"/>
+    <path d="M42 99 L38 96 M82 96 L86 92" stroke="#2f4f0a" stroke-width="3" stroke-linecap="round"/>
+  </svg>
+</button>
 
 <div id="toast" role="status" hidden></div>
 
@@ -969,6 +1003,26 @@ window.addEventListener('hashchange', function () {
   var view = location.hash.slice(1);
   if (state.me && view !== state.view && ['mine', 'both', 'doors'].indexOf(view) >= 0) show(view);
 });
+
+/* ---------- the grinch ---------- */
+
+var GRUMBLES = [
+  'Bah. Fizzy humbug.',
+  'Every single can is F tier. Every one.',
+  'I took door 24. Kidding. Mostly.',
+  'Your S tier is wrong, and so is your A tier.',
+  'All this ranking. All this NOISE, NOISE, NOISE.',
+  'I would rank them too, if my heart were three sizes bigger.'
+];
+var grinchSaid = -1;
+$('#grinch').onclick = function () {
+  var g = $('#grinch');
+  grinchSaid = (grinchSaid + 1 + Math.floor(Math.random() * (GRUMBLES.length - 1))) % GRUMBLES.length;
+  toast(GRUMBLES[grinchSaid]);
+  g.classList.add('up');
+  clearTimeout(g.t);
+  g.t = setTimeout(function () { g.classList.remove('up'); }, 2500);
+};
 
 (async function init() {
   var view = (location.hash || '').slice(1);
