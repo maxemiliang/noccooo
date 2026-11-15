@@ -184,23 +184,37 @@ body.selecting #view-mine .label:hover { filter: saturate(1.2) brightness(1.05);
 .section-gap { margin-top: 28px; }
 
 /* ---------- doors ---------- */
-.doors { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+/* An advent calendar: 24 cells of one size; 6 x 4 once there's room. */
+.doors { display: grid; gap: 10px; grid-template-columns: repeat(3, 1fr); }
+@media (min-width: 480px) { .doors { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 760px) { .doors { grid-template-columns: repeat(6, 1fr); gap: 14px; } }
+@media (min-width: 1000px) { .doors { grid-template-columns: repeat(8, 1fr); } }
 .doorcell {
-  position: relative; display: flex; flex-direction: column; gap: 8px; padding: 8px 8px 10px; text-align: left;
-  background: var(--surface); border: 0; border-radius: 14px; cursor: pointer; box-shadow: var(--lift);
+  position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 8px 8px 10px;
+  text-align: center; background: var(--surface); border: 0; border-radius: 14px; cursor: pointer; box-shadow: var(--lift);
+  transition: transform .12s;
 }
+.doorcell:not(:disabled):hover { transform: translateY(-2px); }
 .doorcell:disabled { cursor: default; }
 .doorcell .tile { --s: 100%; width: 100%; pointer-events: none; }
 .doorcell .tile .pic { width: 100%; height: auto; aspect-ratio: 4 / 5; }
 .doorcell .tile .ph { font-size: 2.8rem; }
-.doorcell .nm { font-weight: 700; font-size: .88rem; line-height: 1.2; word-break: break-word; }
-.doorcell.empty {
-  border: 2px dashed var(--line); background: transparent; box-shadow: none; align-items: center; justify-content: center;
-  min-height: 160px; color: var(--muted); font-weight: 600;
+.doorcell .nm {
+  font-weight: 700; font-size: .88rem; line-height: 1.2; min-height: 2.4em;
+  display: flex; align-items: center; justify-content: center; overflow-wrap: anywhere;
 }
-.doorcell.empty .dn { font-size: 2.4rem; line-height: 1; color: var(--line); }
-.doorcell.empty:not(:disabled):hover { border-color: var(--focus); color: var(--ink); }
-.doorcell.empty:not(:disabled):hover .dn { color: var(--focus); }
+/* A closed door: the panel where the can will go, its number, and what tapping does. */
+.doorcell .door {
+  aspect-ratio: 4 / 5; border-radius: 9px; display: grid; place-items: center;
+  background: var(--lane); border: 2px dashed var(--line);
+}
+.doorcell .dn { font-size: 2.6rem; line-height: 1; color: #c3ccd7; }
+.doorcell.empty .nm { color: var(--muted); font-weight: 600; }
+.doorcell.empty:not(:disabled):hover .door { border-color: var(--focus); }
+.doorcell.empty:not(:disabled):hover .dn, .doorcell.empty:not(:disabled):hover .nm { color: var(--focus); }
+.doorcell.next .door { border: 2px solid var(--ink); background: var(--surface); }
+.doorcell.next .dn, .doorcell.next .nm { color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .doorcell { transition: none; } .doorcell:not(:disabled):hover { transform: none; } }
 
 /* ---------- mover, dialogs, toast ---------- */
 .mover {
@@ -236,13 +250,16 @@ dialog h2 { font-size: 2rem; margin-bottom: 14px; }
   border: 1px solid var(--line); border-radius: 12px; min-height: 48px; padding: 8px 12px; width: 100%;
 }
 .photo {
-  display: grid; place-items: center; aspect-ratio: 4 / 3; margin-bottom: 14px; border-radius: 14px; cursor: pointer;
+  display: grid; place-items: center; aspect-ratio: 4 / 3; border-radius: 14px; padding: 16px; text-align: center;
   border: 2px dashed var(--line); background: var(--lane); color: var(--muted); font-weight: 600; overflow: hidden; position: relative;
 }
 .photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.photo input { position: absolute; width: 1px; height: 1px; opacity: 0; }
-.photo:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
-.photo .change { position: absolute; bottom: 8px; right: 8px; background: var(--surface); color: var(--ink); padding: 4px 12px; border-radius: 999px; font-size: .85rem; }
+.photo-actions { display: flex; gap: 8px; margin: 10px 0 16px; }
+.photo-actions .btn { flex: 1 1 0; position: relative; padding: 0 10px; white-space: nowrap; }
+.photo-actions input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.photo-actions .btn:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
+/* Desktop browsers ignore capture= and would only open the file picker again. */
+@media (hover: hover) and (pointer: fine) { .photo-actions .cam { display: none; } }
 .actions { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
 .actions .grow { flex: 1; }
 .btn {
@@ -290,12 +307,14 @@ dialog h2 { font-size: 2rem; margin-bottom: 14px; }
 <dialog id="doorDlg">
   <form id="doorForm">
     <h2 id="doorTitle">Door</h2>
-    <label class="photo" id="photoPick">
-      <span id="photoHint">Add a photo</span>
-      <img id="photoPrev" alt="" hidden>
-      <span class="change" id="photoChange" hidden>Change photo</span>
-      <input type="file" id="photoInput" accept="image/*">
-    </label>
+    <div class="photo" id="photoPick">
+      <span id="photoHint">No photo yet. Take one of the can, or pick one you already have.</span>
+      <img id="photoPrev" alt="">
+    </div>
+    <div class="photo-actions">
+      <label class="btn cam"><input type="file" class="photo-file" accept="image/*" capture="environment">Take photo</label>
+      <label class="btn ghost" id="photoChoose"><input type="file" class="photo-file" accept="image/*">Choose photo</label>
+    </div>
     <label class="field">Flavour <input id="doorName" required maxlength="200" autocomplete="off" placeholder="What was behind the door?"></label>
     <label class="field">Door <select id="doorDay"></select></label>
     <div class="actions">
@@ -509,17 +528,23 @@ function renderDoors() {
   var v = $('#view-doors');
   var byDay = {};
   state.flavours.forEach(function (f) { byDay[f.day] = f; });
+  var next = 0;
+  for (var n = 1; n <= 24 && !next; n++) if (!byDay[n]) next = n;
   var html = '<div class="viewhead"><h1>The 24 doors</h1><span class="muted">' + state.flavours.length + ' of 24 opened</span></div>' +
     '<p class="lede">' + (canEdit() ? 'Tap a door to add the flavour behind it, or to change its name or photo.' : 'The flavour behind each door.') + '</p><div class="doors">';
   for (var d = 1; d <= 24; d++) {
     var f = byDay[d];
+    var off = canEdit() ? '' : ' disabled';
     if (f) {
-      html += '<button type="button" class="doorcell" data-door="' + d + '"' + (canEdit() ? '' : ' disabled') + '>' +
+      html += '<button type="button" class="doorcell" data-door="' + d + '"' + off + '>' +
         tileHtml(f, { tag: 'span' }).replace('<span class="nm">' + esc(f.name) + '</span>', '') +
         '<span class="nm">' + esc(f.name) + '</span></button>';
     } else {
-      html += '<button type="button" class="doorcell empty" data-door="' + d + '"' + (canEdit() ? '' : ' disabled') + '>' +
-        '<span class="dn">' + d + '</span>' + (canEdit() ? '<span>Add flavour</span>' : '') + '</button>';
+      var isNext = d === next && canEdit();
+      html += '<button type="button" class="doorcell empty' + (isNext ? ' next' : '') + '" data-door="' + d + '"' + off +
+        ' aria-label="Door ' + d + (canEdit() ? ', add its flavour' : ', not opened yet') + '">' +
+        '<span class="door"><span class="dn">' + d + '</span></span>' +
+        '<span class="nm">' + (canEdit() ? (isNext ? 'Open next' : 'Add') : 'Not opened') + '</span></button>';
     }
   }
   v.innerHTML = html + '</div>';
@@ -803,16 +828,16 @@ function openDoor(day) {
   $('#doorDay').innerHTML = opts;
   $('#doorDay').value = String(day);
   $('#doorDelete').hidden = !f;
-  $('#photoInput').value = '';
+  $$('.photo-file').forEach(function (input) { input.value = ''; });
   setPreview(f && f.hasImage ? f.imageUrl + '?v=' + encodeURIComponent(f.updatedAt) : null);
   $('#doorDlg').showModal();
-  if (!f) $('#doorName').focus();
+  if (!f && matchMedia("(pointer: fine)").matches) $("#doorName").focus();
 }
 
 function setPreview(src) {
   $('#photoPrev').hidden = !src;
-  $('#photoChange').hidden = !src;
   $('#photoHint').hidden = !!src;
+  $('#photoChoose').lastChild.textContent = src ? 'Choose another' : 'Choose photo';
   if (src) $('#photoPrev').src = src; else $('#photoPrev').removeAttribute('src');
 }
 
@@ -830,12 +855,15 @@ async function shrink(file) {
   }
 }
 
-$('#photoInput').onchange = function () {
-  var file = this.files && this.files[0];
-  if (!file) return;
-  doorEdit.file = file;
-  setPreview(URL.createObjectURL(file));
-};
+/* Both the camera and the library input land here. */
+$$('.photo-file').forEach(function (input) {
+  input.onchange = function () {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    doorEdit.file = file;
+    setPreview(URL.createObjectURL(file));
+  };
+});
 
 $('#doorForm').onsubmit = async function (ev) {
   ev.preventDefault();
