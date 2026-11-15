@@ -4,13 +4,18 @@
 
 import { onRequest } from '@max-cloud/functions'
 import { app, type Env } from './app'
+import { authFromEnv, parseRaters } from './auth'
 import { createDb } from './db'
 
 let env: Env | undefined
 
-/** Made on first use: `maxcloud-functions --describe` loads this module without a database. */
+/**
+ * Made on first use: `maxcloud-functions --describe` loads this module without a database.
+ * Auth is Cloudflare Access (CF_ACCESS_TEAM_DOMAIN, CF_ACCESS_AUD from maxcloud.yaml's env:);
+ * the raters are RATERS (mcloud env set, so the emails stay out of this public repo).
+ */
 function productionEnv(): Env {
-  env ??= { DB: createDb() }
+  env ??= { DB: createDb(), AUTH: authFromEnv(), RATERS: parseRaters(process.env.RATERS) }
   return env
 }
 

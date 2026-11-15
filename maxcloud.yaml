@@ -17,6 +17,13 @@ db: {size: 1Gi}
 # platform/infrastructure/configs/run/domains.yaml); proxied: behind Cloudflare.
 domains:
   - {host: noccooo.makiya.dev, service: web, proxied: true}
+# Cloudflare Access in front of the domain (Access app "noccooo", see README, Auth). The
+# app verifies the JWT Access adds to every request against these and refuses everything
+# (503) without them. Neither is secret: both are in every token. The raters' emails
+# (RATERS) are not in this public repo: they're set with mcloud env set.
+env:
+  CF_ACCESS_TEAM_DOMAIN: https://gronblomdev.cloudflareaccess.com
+  CF_ACCESS_AUD: a81cd52055c4ff2e622b49258de26a057d450491139af451dd0323529321874d
 # The folder the app is built from and mcloud dev runs in, if it isn't this
 # one (e.g. the web app in worker/ of a repo whose root is a Go CLI):
 # source: worker

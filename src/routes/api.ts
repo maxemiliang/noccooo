@@ -1,61 +1,72 @@
 import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
+import { MAX_RATERS, requireRater } from '../auth'
 import type { AppEnv } from '../app'
 import { users } from '../db/schema'
+import { flavoursApi } from './flavours'
+import { rankingsApi } from './rankings'
+import { findUser, parseId, userJson } from './shared'
 
 export const api = new Hono<AppEnv>()
 
-/** The Postgres error code of an error drizzle wrapped (DrizzleQueryError keeps it in cause). */
-function pgCode(error: unknown): string | undefined {
-  let e: unknown = error
-  while (e && typeof e === 'object') {
-    const code = (e as { code?: unknown }).code
-    if (typeof code === 'string') return code
-    e = (e as { cause?: unknown }).cause
-  }
-  return undefined
-}
+// Everyone through Access may read; writes need one of the raters (src/auth.ts).
+api.use('*', requireRater)
 
-const NewUser = z.object({
-  email: z.email(),
-  name: z.string().min(1).max(200)
+api.route('/flavours', flavoursApi)
+api.route('/', rankingsApi)
+
+/** Who you are: your email, your rater row (null for a viewer), and whether auth is dev auth. */
+api.get('/me', c => {
+  const rater = c.get('rater')
+  return c.json({
+    email: c.get('email'),
+    user: rater ? userJson(rater) : null,
+    maxRaters: MAX_RATERS,
+    dev: c.env.AUTH.dev,
+    // For the dev user switcher only: who you can switch to.
+    ...(c.env.AUTH.dev && c.env.RATERS ? { devEmails: c.env.RATERS.map(r => r.email) } : {})
+  })
 })
 
-api.get('/users', async c => {
-  const rows = await c.env.DB.db.select().from(users).orderBy(users.createdAt, users.id)
-  return c.json({ users: rows })
-})
+const UpdateMe = z.object({ name: z.string().trim().min(1).max(60) })
 
-api.post('/users', async c => {
+/** Rename yourself (raters start with their RATERS name, else one made from their email). */
+api.patch('/me', async c => {
+  const rater = c.get('rater')!
   let body: unknown
   try {
     body = await c.req.json()
   } catch {
     return c.json({ error: 'invalid_json', message: 'request body is not valid JSON' }, 400)
   }
-  const parsed = NewUser.safeParse(body)
+  const parsed = UpdateMe.safeParse(body)
   if (!parsed.success) {
     return c.json({ error: 'invalid_input', message: 'invalid input', details: parsed.error.issues }, 422)
   }
-  try {
-    const [user] = await c.env.DB.db.insert(users).values(parsed.data).returning()
-    return c.json({ user }, 201)
-  } catch (error) {
-    if (pgCode(error) === '23505') {
-      return c.json({ error: 'conflict', message: 'a user with that email already exists' }, 409)
-    }
-    throw error
+  const [user] = await c.env.DB.db
+    .update(users)
+    .set({ name: parsed.data.name })
+    .where(eq(users.id, rater.id))
+    .returning()
+  return c.json({ user: userJson(user!) })
+})
+
+/** The raters. With RATERS set, only those emails, in its order, even if others have rows. */
+api.get('/users', async c => {
+  let rows = await c.env.DB.db.select().from(users).orderBy(users.createdAt, users.id)
+  const configured = c.env.RATERS
+  if (configured) {
+    const order = new Map(configured.map((r, i) => [r.email, i]))
+    rows = rows.filter(u => order.has(u.email.toLowerCase()))
+    rows.sort((x, y) => order.get(x.email.toLowerCase())! - order.get(y.email.toLowerCase())!)
   }
+  return c.json({ users: rows.map(userJson) })
 })
 
 api.get('/users/:id', async c => {
-  const id = Number(c.req.param('id'))
-  if (!Number.isSafeInteger(id) || id <= 0) {
-    return c.json({ error: 'not_found', message: 'no such user' }, 404)
-  }
-  const rows = await c.env.DB.db.select().from(users).where(eq(users.id, id)).limit(1)
-  const user = rows[0]
+  const id = parseId(c.req.param('id'))
+  const user = id ? await findUser(c, id) : null
   if (!user) return c.json({ error: 'not_found', message: 'no such user' }, 404)
-  return c.json({ user })
+  return c.json({ user: userJson(user) })
 })
