@@ -31,6 +31,10 @@ spec:
               key: uri
               name: db-app
               optional: true
+        - name: CF_ACCESS_AUD
+          value: a81cd52055c4ff2e622b49258de26a057d450491139af451dd0323529321874d
+        - name: CF_ACCESS_TEAM_DOMAIN
+          value: https://gronblomdev.cloudflareaccess.com
         envFrom:
         - secretRef:
             name: maxcloud-s3
