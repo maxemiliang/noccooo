@@ -7,6 +7,6 @@ resources:
 - functions.yaml
 # The deploy workflow replaces app with the image it built, pinned by digest.
 images:
-- digest: sha256:83581d48b581c4007d5c6dabb24d40706fde8803300a999d9f77053638548226
+- digest: sha256:49178e18ff3270b7b037edc08bdb3e69fdf536149d0111dd8cf25777637ff8a4
   name: app
   newName: registry.gronblom.dev/noccooo/noccooo
