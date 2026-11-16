@@ -1,16 +1,27 @@
 import { sql } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
+import { requireIdentity, type Auth, type RaterConfig } from './auth'
 import type { Db } from './db'
+import type { User } from './db/schema'
+import { page } from './page'
 import { api } from './routes/api'
 
-/** What every request handler gets: the database (pool, drizzle client, migration state). */
+/** What every request handler gets: the database and how to tell who's asking (src/auth.ts). */
 export interface Env {
   DB: Db
+  AUTH: Auth
+  /** The RATERS variable (src/auth.ts parseRaters): who the raters are and their names. */
+  RATERS?: RaterConfig[] | null
 }
 
 export type AppEnv = {
   Bindings: Env
+  /**
+   * Set by requireIdentity: the verified email, and the rater it belongs to (unset for a
+   * viewer, who may only read).
+   */
+  Variables: { email: string; rater?: User }
 }
 
 const app = new Hono<AppEnv>()
@@ -26,7 +37,11 @@ app.use('*', async (c, next) => {
   await next()
 })
 
-app.get('/', c => c.json({ name: 'noccooo', links: { health: '/health', api: '/api' } }))
+// Everything but /health needs a verified identity (Cloudflare Access in production).
+app.use('*', requireIdentity)
+
+// The tier-list app (src/page.ts); the JSON API lives under /api.
+app.get('/', c => c.html(page))
 
 app.get('/health', async c => {
   const { rows } = await c.env.DB.db.execute<{ version: string }>(sql`select version() as version`)

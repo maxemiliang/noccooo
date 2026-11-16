@@ -175,6 +175,9 @@ importers:
       hono:
         specifier: ^4.13.16
         version: 4.13.18
+      jose:
+        specifier: ^6.2.17
+        version: 6.2.17
       pg:
         specifier: ^8.23.1
         version: 8.23.1
@@ -1134,6 +1137,9 @@ packages:
     resolution: {integrity: sha512-H9q/E1XizaWstJxUW881dmLxEj+t/TrGGnyxINkm4+sK0qUwsMtFdo2BWI9Vs3cIS19MU6b6iCijoUoEf4f3DA==}
     engines: {node: '>=16.9.0'}
 
+  jose@6.2.17:
+    resolution: {integrity: sha512-wOuK9V1yujQFH5S0ZWmLcDZN7+IKh9bUCC2ZPCf2HDlol3WWHy+PPyNjEI75FXRLMp3vDKQcupP59xhVU95hcg==}
+
   lightningcss-android-arm64@1.33.0:
     resolution: {integrity: sha512-gEpRTalKdosp4Bb8qWtc2iOgE5SeIHlpS1up9bFq2wAyYhl1UdTObYiHe98zEM9SQvSoqQZ1IQD0JNpg3Ml5pg==}
     engines: {node: '>= 12.0.0'}
@@ -2022,6 +2028,8 @@ snapshots:
       resolve-pkg-maps: 1.0.0
 
   hono@4.13.18: {}
+
+  jose@6.2.17: {}
 
   lightningcss-android-arm64@1.33.0:
     optional: true
