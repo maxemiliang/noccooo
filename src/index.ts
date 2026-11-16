@@ -20,6 +20,6 @@ function productionEnv(): Env {
  * (Node, then the migration check) never greets a request.
  */
 export const web = onRequest(
-  { minInstances: 1, maxInstances: 2, memory: '256Mi', healthPath: '/health' },
+  { minInstances: 0, maxInstances: 1, memory: '128Mi', healthPath: '/health' },
   req => app.fetch(req, productionEnv())
 )
