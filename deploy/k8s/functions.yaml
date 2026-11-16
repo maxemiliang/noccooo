@@ -13,8 +13,8 @@ spec:
   template:
     metadata:
       annotations:
-        autoscaling.knative.dev/max-scale: "2"
-        autoscaling.knative.dev/min-scale: "1"
+        autoscaling.knative.dev/max-scale: "1"
+        autoscaling.knative.dev/min-scale: "0"
       labels:
         app.kubernetes.io/name: web
         app.kubernetes.io/part-of: maxcloud-functions
@@ -60,8 +60,8 @@ spec:
             path: /health
         resources:
           limits:
-            memory: 256Mi
+            memory: 128Mi
           requests:
-            memory: 256Mi
+            memory: 128Mi
       priorityClassName: tenant
       timeoutSeconds: 300
